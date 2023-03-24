@@ -1,3 +1,5 @@
+import { toDateTime, toTime, toDate, toTemp } from './helpers.js';
+
 async function getJson(url) {
   const request = await fetch(url);
   const response = await request.json();
@@ -23,57 +25,109 @@ async function getForecasts() { // forecast, forecastGridData, forecastHourly, f
   const request = await getJson(`https://api.weather.gov/points/${coords.latitude},${coords.longitude}`);
   const forecastWeekly = await getJson(request.properties.forecast);
   const forecastHourly = await getJson(request.properties.forecastHourly);
-  const forecastGridData = await getJson(request.properties.forecastGridData);
-  const forecastOffice = await getJson(request.properties.forecastOffice);
-  const forecastZone = await getJson(request.properties.forecastZone);
-  return {coords, forecastWeekly, forecastHourly, forecastGridData, forecastOffice, forecastZone};
+  // const forecastGridData = await getJson(request.properties.forecastGridData);
+  // const forecastOffice = await getJson(request.properties.forecastOffice);
+  // const forecastZone = await getJson(request.properties.forecastZone);
+  // return {coords, forecastWeekly, forecastHourly, forecastGridData, forecastOffice, forecastZone};
+  return { forecastWeekly, forecastHourly }
 }
 
-function showForecast(days) {
+function toForecastClasses(forecast) {
+  let forecastClasses = forecast.toLowerCase().split(' ');
+  forecastClasses.forEach((element, index, array) => {
+    const removals = ['chance', 'and', 'then', 'slight'];
+    if(removals.includes(element)) {
+      forecastClasses.splice(index, 1);
+    }
+  });
+  return forecastClasses.join(' ');
+}
+
+function showForecast(days, hourlyForecast) {
   return days.map(day => {
     const name = day.name;
     const num = day.number;
     const details = day.detailedForecast;
     const short = day.shortForecast;
-    const timeStart = new Date(day.startTime).toLocaleString('en-US', {dateStyle: 'short', timeStyle: 'short'});
-    const timeEnd = new Date(day.endTime).toLocaleString('en-US', {dateStyle: 'short', timeStyle: 'short'});
+    const date = toDate(day.startTime);
+    const timeStart = toTime(day.startTime);
+    const timeEnd = toTime(day.endTime);
     const isDay = day.isDaytime;
     const icon = day.icon;
     const precipitation = (day.probabilityOfPrecipitation.value === null) ? 0 + '%' : day.probabilityOfPrecipitation.value + '%';
     const humidity = (day.relativeHumidity.value === null) ? 0 + '%' : day.relativeHumidity.value + '%';
-    const tempF = day.temperature + 'F';
-    const tempC = ((day.temperature - 32) * 5/9).toFixed(1) + 'C';
+    const temp = toTemp(day.temperature);
     const windDirection = day.windDirection;
     const windSpeed = day.windSpeed;
     const currentDay = (day.name.split(' '))[0].toLowerCase();
     const nameShort = (currentDay == 'this') ? 'today' : currentDay;
-    const classList = nameShort + ((isDay == true) ? ' day' : ' night');
+    const forecastClassList = toForecastClasses(day.shortForecast);
+    const dayClassList = nameShort + ((isDay == true) ? ' day' : ' night');
+    const hourly = getHourly(day.startTime, day.endTime, hourlyForecast);
+    console.log(hourly);
+
     return  `
-            <div id="${num}" class="forecast ${classList}">
-              <h3>${name}</h3>
+          <div class="forecast-container">
+            <div id="${num}" class="forecast ${dayClassList} ${forecastClassList}">
+              <div class="title">${name}</div>
+              <div class="date">${date}<br />${timeStart} to ${timeEnd}</div>
               <div class="conditions">
-                <div class="time">${timeStart} - ${timeEnd}</div>
-                <div class="temperature">${tempF + ' / ' + tempC}</div>
+                <div class="temperature">${temp.f + ' / ' + temp.c}</div>
                 <div class="precipitation">${precipitation}</div>
                 <div class="wind">${windSpeed + ' ' + windDirection}</div>
                 <div class="humidity">${humidity}</div>
-                <img class="icon" src="${icon}" />
               </div>
               <details>
                 <summary>${short}</summary>
                 <p class="details">${details}</p>
               </details>
+            </div>
+            <div id="${num}" class="forecast hourly ${dayClassList}">
+            `+ showHourly(hourly) +`
+            </div>
+          </div>
+            `;
+  }).join('');
+}
 
+function showHourly(hourly) {
+  return hourly.map(hour => {
+    const timeStart = toTime(hour.startTime);
+    const timeEnd = toTime(hour.endTime);
+    const shortForecast = hour.shortForecast;
+    const temp = toTemp(hour.temperature);
+    const forecastClasses = toForecastClasses(hour.shortForecast);
+    return  `
+            <div class="hour ${forecastClasses}">
+              <h4>${temp.f} / ${temp.c}</h4>
+              <small>${timeStart}</small>
             </div>
             `;
   }).join('');
+}
+
+function getHourly(dayStartTime, dayEndTime, hourly) {
+  let hourlyForecasts = [];
+  let startingHour = null;
+  hourly.forEach(hour => {
+    if(hour.startTime === dayStartTime) {
+      startingHour = hour.number;
+      hourlyForecasts.push(hour);
+    }
+    if(startingHour !== null && hour.number > startingHour && hour.number <= startingHour + 11  && hour.startTime !== dayEndTime) {
+      hourlyForecasts.push(hour);
+    } else if(hour.startTime == dayEndTime) {
+      startingHour = null;
+    }
+  });
+ return hourlyForecasts;
 }
 
 async function renderPage(target) {
   const forecastData = await getForecasts();
   const forecasts = document.createElement('div');
   forecasts.setAttribute('id', 'forecasts');
-  forecasts.innerHTML = showForecast(forecastData.forecastWeekly.properties.periods);
+  forecasts.innerHTML = showForecast(forecastData.forecastWeekly.properties.periods, forecastData.forecastHourly.properties.periods);
   target.innerHTML = forecasts.outerHTML;
 }
 
