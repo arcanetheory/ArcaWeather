@@ -1,24 +1,4 @@
-import { toDateTime, toTime, toDate, toTemp } from './helpers.js';
-
-async function getJson(url) {
-  const request = await fetch(url);
-  const response = await request.json();
-  return await response;
-}
-
-function getLocation() {
-  return new Promise((resolve, reject) => {
-      navigator.geolocation.getCurrentPosition(
-          (pos) => {
-              return resolve(pos.coords);
-          },
-          (err) => {
-              console.warn(`ERROR(${err.code}): ${err.message}`);
-              return reject(err);
-          }
-      );
-  });
-}
+import { toDateTime, toTime, toDate, toTemp, getJson, getLocation } from './helpers.js';
 
 async function getForecasts() { // forecast, forecastGridData, forecastHourly, forecastOffice, forecastZone
   const coords = await getLocation();
