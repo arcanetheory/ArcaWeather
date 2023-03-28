@@ -28,7 +28,7 @@
     "start_url": "/ArcaWeather",
     "background_color": "#6b4e71",
     "display": "fullscreen",
-    "scope": "/ArcaWeather/",
+    "scope": "/ArcaWeather",
     "theme_color": "#6b4e71",
     "shortcuts": [
     ],
