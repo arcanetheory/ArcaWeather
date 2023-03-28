@@ -25,7 +25,7 @@
       }
     ],
     "id": "ArcaWeather",
-    "start_url": "/",
+    "start_url": "/ArcaWeather",
     "background_color": "#6b4e71",
     "display": "standlone",
     "scope": "/",
