@@ -27,7 +27,7 @@
     "id": "",
     "start_url": "https://arcanetheory.github.io/ArcaWeather/",
     "background_color": "#6b4e71",
-    "display": "fullscreen",
+    "display": "standalone",
     "scope": "https://arcanetheory.github.io/ArcaWeather/",
     "theme_color": "#6b4e71",
     "shortcuts": [
