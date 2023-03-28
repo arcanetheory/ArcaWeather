@@ -24,11 +24,11 @@
         "purpose": "maskable"
       }
     ],
-    "id": "/",
-    "start_url": "/ArcaWeather",
+    "id": "/ArcaWeather/",
+    "start_url": "/ArcaWeather/",
     "background_color": "#6b4e71",
     "display": "fullscreen",
-    "scope": "/",
+    "scope": "/ArcaWeather/",
     "theme_color": "#6b4e71",
     "shortcuts": [
     ],
